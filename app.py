@@ -217,9 +217,44 @@ def main():
                 # Sonuçları göster
                 st.success("Model değerlendirmesi tamamlandı!")
                 
-                # Sonuçları göster
+                # Sonuçları DataFrame'e çevir
                 results_df = pd.DataFrame(results).T
-                st.dataframe(results_df.style.highlight_max(axis=0))
+                
+                # Tabloda en yüksek doğruluğa sahip modeli vurgula
+                results_df['Doğruluk'] = results_df['Doğruluk'].astype(float)
+                best_model = results_df['Doğruluk'].idxmax()
+                results_df['En İyi Model'] = results_df.index == best_model
+                
+                # Sonuç tablosunu göster
+                st.subheader("Model Performans Sonuçları")
+                st.dataframe(results_df.style.apply(lambda x: ['background: lightgreen' if x.name == best_model else '' for _ in x], axis=1))
+                
+                # Doğruluk oranlarını görselleştir
+                fig = px.bar(
+                    results_df,
+                    x=results_df.index,
+                    y='Doğruluk',
+                    title='Algoritmaların Doğruluğu',
+                    labels={'x': 'Model', 'y': 'Doğruluk (%)'},
+                    color='Doğruluk',
+                    color_continuous_scale=px.colors.sequential.Viridis,
+                    text='Doğruluk'
+                )
+                fig.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
+                st.plotly_chart(fig, use_container_width=True)
+
+                # Diğer metrikleri görselleştir
+                metrics_to_plot = ['Hata Oranı', 'Duyarlılık', 'Kesinlik']
+                metrics_fig = px.bar(
+                    results_df,
+                    x=results_df.index,
+                    y=metrics_to_plot,
+                    title='Diğer Performans Metrikleri',
+                    labels={'x': 'Model', 'y': 'Değer'},
+                    barmode='group',
+                    text_auto=True
+                )
+                st.plotly_chart(metrics_fig, use_container_width=True)
     
     elif selected == "Saldırı Analizi":
         st.header("Saldırı Türleri Analizi")
